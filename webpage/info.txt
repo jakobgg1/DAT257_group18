@@ -1,0 +1,4 @@
+In order to run the website: 
+1. Download liveserver as an extension
+2. Press "Go live" in bottom right corner
+3. The website will now go live in your browser.
