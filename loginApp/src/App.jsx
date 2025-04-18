@@ -22,8 +22,11 @@ function App() {
   }
     
   return (
+  <div className="page-wrapper">
+    <img src="logo.svg" alt="OptiSolar Logo" className="page-logo" />
     <div className="login-container">
     <h2 className="title">Login</h2>
+    <p className="subtitle">Access the OptiSolar dashboard</p>
       <form action="#" className="login-form" onSubmit={handleLogin}>
 
         <InputField type="text" placeholder="Username" icon="person" value={username} onChange={(e)=> setUsername(e.target.value)} />
@@ -34,6 +37,7 @@ function App() {
       </form>
 
       </div>
+    </div>
     
   )
   
