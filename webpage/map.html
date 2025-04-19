@@ -27,6 +27,11 @@
 
     <div class="container">
         <h1 class="page-title">Sweden Solar Map</h1>
+        <div class="coordinate-search">
+            <input type="text" id="latitude" placeholder="Latitude (t.ex. 59.33)">
+            <input type="text" id="longitude" placeholder="Longitude (t.ex. 18.06)">
+            <button onclick="goToCoordinates()">Go</button>
+        </div>
         <div id="map"></div>
     </div>
 
@@ -48,6 +53,21 @@
         // Optional: Add a simple marker in Stockholm
         L.marker([59.3293, 18.0686]).addTo(map)
             .bindPopup('Stockholm');
+        
+        function goToCoordinates() {
+            const lat = parseFloat(document.getElementById("latitude").value);
+            const lng = parseFloat(document.getElementById("longitude").value);
+                
+            if (!isNaN(lat) && !isNaN(lng)) {
+                map.setView([lat, lng], 12);
+                L.marker([lat, lng]).addTo(map)
+                    .bindPopup(`Du sökte: ${lat}, ${lng}`)
+                    .openPopup();
+            } else {
+                alert("Skriv in giltiga koordinater.");
+            }
+
+        }
     </script>
 </body>
 </html>

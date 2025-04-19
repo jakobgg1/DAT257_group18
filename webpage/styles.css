@@ -130,3 +130,36 @@ body {
         font-size: 2rem;
     }
 }
+
+/* för sökfunktionen */
+
+.coordinate-search {
+    margin-bottom: 15px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.coordinate-search input {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+    width: 160px;
+}
+
+.coordinate-search button {
+    padding: 8px 16px;
+    border: none;
+    background-color: #388E3C;
+    color: white;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.coordinate-search button:hover {
+    background-color: #388E3C;
+}
