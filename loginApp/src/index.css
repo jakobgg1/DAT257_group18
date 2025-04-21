@@ -1,0 +1,132 @@
+@import url('https://fonts.googleapis.com/css2?family=Boldonse&family=Inter:wght@100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined');
+
+
+*{
+  margin :0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family : 'Inter', sans-serif;
+}
+
+body{
+  display: flex;
+  align-items: center;
+  justify-content:  center;
+  min-height: 100vh; 
+  background: #66BB6A;
+
+}
+
+#root{
+  width: 100%;
+  padding: 0 0.6rem;
+}
+
+.login-container{
+  max-width: 400px;
+  margin: 0 auto;
+  border-radius: 0.5rem;
+  padding: 4rem 1.5rem;
+  background-color: white;
+  box-shadow: 0 6px 30px rgba(0,0,0,0.1)
+}
+.subtitle {
+  text-align: center;
+  color: #666;
+  font-size: 0.95rem;
+  margin-bottom: 1.5rem;
+}
+
+.page-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 100vh;
+  background: #66BB6A;
+  /* your green background */
+  
+}
+
+.page-logo {
+  width: clamp(120px, 15vw, 180px);
+  margin-bottom: 1rem;
+}
+
+.login-container .title{
+  text-align : center;
+  font-size: 2rem;
+  font-weight: 600;
+  margin-bottom : 1rem;
+}
+
+.login-form .input-wrapper{
+
+  height: 54px;
+  width: 100%;
+  margin-bottom: 1.25rem;
+  position: relative;
+ 
+}
+
+
+
+
+
+
+.login-form .input-wrapper .input-field{
+  height : 100%;
+  width : 100%;
+
+  padding: 0 2.7rem ;
+  border-radius: 0.3rem;
+  border: 1px solid grey;
+  font-size: 15px;
+  transition: 0.3s ease;
+}
+.login-form .input-wrapper .input-field:focus{
+  color: #2E7D32;
+}
+.login-form .input-wrapper i{
+  color: #66BB6A;
+  position: absolute;
+  top:25%;
+}
+
+.login-form .input-wrapper i:not(.eye-icon) {
+
+  left: 0.8rem;
+
+}
+.login-form .input-wrapper i.eye-icon{
+  font-size: 1.5rem;
+  cursor:pointer;
+  right:0.8rem;
+  display:none;
+}
+
+.login-form .input-wrapper .input-field:focus ~i:not(.eye-icon){
+  color:#2E7D32;
+}
+.login-form .input-wrapper .input-field:valid ~ i.eye-icon{
+  display: block;
+}
+.login-form .login-button{
+  width: 100%;
+  height:54px;
+  cursor:pointer;
+  outline:none;
+  font-size: 1.2rem;
+  background-color: #2E7D32;
+  color: white;
+  border-radius: 0.3rem;
+  border: none;
+  transition: 0.3s ease;
+  
+}
+
+.login-form .login-button:hover{
+  background-color: #388E3C;
+  
+}
