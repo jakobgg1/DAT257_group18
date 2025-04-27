@@ -81,11 +81,9 @@ def collect_data_for_sweden(date_from, date_to, resolution_deg=1.0):
                     direct_avg = sum(direct_values) / len(direct_values)
                     diffuse_avg = sum(diffuse_values) / len(diffuse_values) if diffuse_values else 0
                     clarity = direct_avg / global_avg if global_avg else 0
-                    location_name = get_location_name(lat,lon)
 
                     # Write data to CSV file
                     writer.writerow([
-                        location_name,
                         round(lat,2),
                         round(lon,2),
                         round(global_avg, 2),
@@ -95,7 +93,7 @@ def collect_data_for_sweden(date_from, date_to, resolution_deg=1.0):
                     ])
                 
                 # Print ou
-                print(f"{location_name}({lat:.2f}, {lon:.2f} - Global: {global_avg:.1f}, Clarity: {clarity:.2f}")
+                print(f"({lat:.2f}, {lon:.2f} - Global: {global_avg:.1f}, Clarity: {clarity:.2f}")
             else:
                 print(f"Skipped ({lat:.2f}, {lon:.2f}) - Incomplete data")
 
@@ -103,4 +101,4 @@ def collect_data_for_sweden(date_from, date_to, resolution_deg=1.0):
 
 
 if __name__ == "__main__":
-    collect_data_for_sweden(20240601,20240607, resolution_deg=1.0)
+    collect_data_for_sweden(20240601,20240607, resolution_deg=0.25)
