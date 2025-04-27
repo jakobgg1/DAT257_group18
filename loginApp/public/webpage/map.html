@@ -1,5 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script src="https://unpkg.com/leaflet-pip/leaflet-pip.min.js"></script>
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -49,7 +52,7 @@
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
-        
+
         // Optional: Add a simple marker in Stockholm
         L.marker([59.3293, 18.0686]).addTo(map)
             .bindPopup('Stockholm');
@@ -57,6 +60,7 @@
         function goToCoordinates() {
             const lat = parseFloat(document.getElementById("latitude").value);
             const lng = parseFloat(document.getElementById("longitude").value);
+        
                 
             if (!isNaN(lat) && !isNaN(lng)) {
                 map.setView([lat, lng], 12);
@@ -66,8 +70,48 @@
             } else {
                 alert("Skriv in giltiga koordinater.");
             }
-
         }
+
+        let swedenBorder;
+
+        fetch('swedenGeo.json')
+            .then(response => response.json())
+            .then(data => {
+                swedenBorder = L.geoJSON(data);
+
+        Papa.parse('dataSweden.csv', {
+            download: true,
+            header: true,
+            complete: function(results) {
+                results.data.forEach(row => {
+                    const lat = parseFloat(row.lat);
+                    const lon = parseFloat(row.lon);
+                    const avg = parseFloat(row.global_avg);
+
+                    console.log(`Parsed Row: lat=${lat}, lon=${lon}, avg=${avg}`);
+
+
+                    if (avg > 5500){
+                        if(swedenBorder && leafletPip.pointInLayer([lon, lat], swedenBorder).length > 0) {
+                            // Check if the point is within the Sweden border
+                            console.log(`Point is within Sweden border: lat=${lat}, lon=${lon}`);
+                        let color = avg > 6500 ? "red": avg > 6000? "orange" : "green"; 
+                    
+                    L.circleMarker([lat,lon], {
+                        radius: 5,
+                        fillColor: color,
+                        color: color,
+                        weight: 1,
+                        opacity: 1,
+                        fillOpacity: 0.8
+                    }).addTo(map)
+                    .bindPopup(`Radiation: ${avg.toFixed(0)} Wh/m²`);
+                }
+            }
+            })
+            }
+        })
+    });  
     </script>
 </body>
 </html>
