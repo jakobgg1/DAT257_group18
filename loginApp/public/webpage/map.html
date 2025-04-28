@@ -3,6 +3,7 @@
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 <script src="https://unpkg.com/leaflet-pip/leaflet-pip.min.js"></script>
 
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -44,6 +45,8 @@
 
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+
     <script>
         // Initialize map centered on Sweden
         const map = L.map('map').setView([62.0, 15.0], 5);
@@ -71,47 +74,62 @@
                 alert("Skriv in giltiga koordinater.");
             }
         }
-
         let swedenBorder;
 
-        fetch('swedenGeo.json')
-            .then(response => response.json())
-            .then(data => {
-                swedenBorder = L.geoJSON(data);
+            fetch('swedenGeo.json')
+                .then(response => response.json())
+                .then(data => {
+                    swedenBorder = L.geoJSON(data);
 
-        Papa.parse('dataSweden.csv', {
-            download: true,
-            header: true,
-            complete: function(results) {
-                results.data.forEach(row => {
-                    const lat = parseFloat(row.lat);
-                    const lon = parseFloat(row.lon);
-                    const avg = parseFloat(row.global_avg);
+                    let heatData = [];
 
-                    console.log(`Parsed Row: lat=${lat}, lon=${lon}, avg=${avg}`);
+                    Papa.parse('dataSweden.csv', {
+                        download: true,
+                        header: true,
+                        complete: function (results) {
+                            results.data.forEach(row => {
+                                const lat = parseFloat(row.lat);
+                                const lon = parseFloat(row.lon);
+                                const avg = parseFloat(row.global_avg);
 
+                                console.log(`Parsed Row: lat=${lat}, lon=${lon}, avg=${avg}`);
 
-                    if (avg > 5500){
-                        if(swedenBorder && leafletPip.pointInLayer([lon, lat], swedenBorder).length > 0) {
-                            // Check if the point is within the Sweden border
-                            console.log(`Point is within Sweden border: lat=${lat}, lon=${lon}`);
-                        let color = avg > 6500 ? "red": avg > 6000? "orange" : "green"; 
-                    
-                    L.circleMarker([lat,lon], {
-                        radius: 5,
-                        fillColor: color,
-                        color: color,
-                        weight: 1,
-                        opacity: 1,
-                        fillOpacity: 0.8
-                    }).addTo(map)
-                    .bindPopup(`Radiation: ${avg.toFixed(0)} Wh/m²`);
-                }
-            }
-            })
-            }
-        })
-    });  
+                                if (avg > 5000) {
+                                    if (swedenBorder && leafletPip.pointInLayer([lon, lat], swedenBorder).length > 0) {
+                                        heatData.push([lat, lon, avg / 1000]);
+                                    } else {
+                                        console.log(`Point is outside Sweden border: lat=${lat}, lon=${lon}`);
+                                    }
+
+                                    // Keeping your original circle markers code commented out:
+                                    /*
+                                    let color = avg > 6500 ? "red" : avg > 6000 ? "orange" : "green"; 
+                                
+                                    L.circleMarker([lat, lon], {
+                                        radius: 5,
+                                        fillColor: color,
+                                        color: color,
+                                        weight: 1,
+                                        opacity: 1,
+                                        fillOpacity: 0.8
+                                    }).addTo(map)
+                                    .bindPopup(`Radiation: ${avg.toFixed(0)} Wh/m²`);
+                                    */
+                                }
+                            });  // <-- Close forEach loop
+
+                            // Create the heatmap layer and add it to the map
+                            L.heatLayer(heatData, {
+                                radius: 25,
+                                blur: 15,
+                                maxZoom: 13  // <-- Reasonable zoom level for heatmap
+                            }).addTo(map);
+                        }  // <-- Close the Papa.parse callback function
+                    });  // <-- Close Papa.parse
+
+                });  // <-- Close the fetch function
+
+   
     </script>
 </body>
 </html>
