@@ -30,10 +30,10 @@
 
     <div class="container">
         <h1 class="page-title">Sweden Solar Map</h1>
-        <div class="coordinate-search">
-            <input type="text" id="latitude" placeholder="Latitude (t.ex. 57.7)">
-            <input type="text" id="longitude" placeholder="Longitude (t.ex. 11.95)">
-            <button onclick="goToCoordinates()">Go</button>
+        <div class="place-search">
+            <input type="text" id="place" placeholder="Sök plats, t.ex. Göteborg" oninput="autocompletePlace()" autocomplete="off">
+            <ul id="suggestions" class="suggestions-list"></ul>
+            <button onclick="searchPlace()">Sök</button>
         </div>
         <div id="map"></div>
     </div>
