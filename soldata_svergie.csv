@@ -1,4 +1,4 @@
-location,lat,lon,global_avg,direct_avg,diffuse_avg,clarity_ratio
+lat,lon,global_avg,direct_avg,diffuse_avg,clarity_ratio
 55.4,13.0,2912.67,1276.19,371.9,0.44
 55.4,13.1,2926.14,1281.05,364.52,0.44
 55.4,13.2,2929.21,1281.73,367.67,0.44
