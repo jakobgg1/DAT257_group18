@@ -57,20 +57,65 @@
         L.marker([59.3293, 18.0686]).addTo(map)
             .bindPopup('Stockholm');
         
-        function goToCoordinates() {
-            const lat = parseFloat(document.getElementById("latitude").value);
-            const lng = parseFloat(document.getElementById("longitude").value);
-        
-                
-            if (!isNaN(lat) && !isNaN(lng)) {
-                map.setView([lat, lng], 12);
-                L.marker([lat, lng]).addTo(map)
-                    .bindPopup(`Du sökte: ${lat}, ${lng}`)
-                    .openPopup();
-            } else {
-                alert("Skriv in giltiga koordinater.");
+        function autocompletePlace() {
+            const input = document.getElementById("place").value;
+            const suggestionsList = document.getElementById("suggestions");
+
+            suggestionsList.innerHTML = "";
+
+            if (input.length < 3) return;
+
+            const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(input)}&addressdetails=1&limit=5&countrycodes=se`;
+
+
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    data.forEach(place => {
+                        const li = document.createElement("li");
+                        li.textContent = place.display_name;
+                        li.addEventListener("click", () => {
+                            document.getElementById("place").value = place.display_name;
+                            suggestionsList.innerHTML = "";
+                            searchPlace();
+                        });
+                        suggestionsList.appendChild(li);
+                    });
+                });
             }
+
+    function searchPlace() {
+        const place = document.getElementById("place").value;
+
+        if (!place) {
+            alert("Skriv in ett platsnamn.");
+            return;
         }
+
+        // Skapa URL till Nominatim
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(place)}`;
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                if (data.length > 0) {
+                    const lat = parseFloat(data[0].lat);
+                    const lon = parseFloat(data[0].lon);
+
+                    map.setView([lat, lon], 12); // Zooma in
+                    L.marker([lat, lon]).addTo(map)
+                        .bindPopup(`Du sökte: ${place}`)
+                        .openPopup();
+                } else {
+                    alert("Hittade ingen plats med det namnet.");
+                }
+            })
+            .catch(error => {
+                console.error('Fel vid sökning:', error);
+                alert("Något gick fel med plats-sökningen.");
+            });
+    }
+
 
         let swedenBorder;
 
