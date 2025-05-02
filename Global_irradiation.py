@@ -19,7 +19,7 @@ if os.path.exists(cache_file):
 else:
     location_cache = {}
 
-#Fetches irradition data (global, direct, diffuse) from SHMI's STRÅNG API 
+#Fetches irradition data (global, direct, diffuse) from SHMI's "STRÅNG" API 
 #Returns a list of avg values for given coordinate and date range
 def get_irradiation (lat, lon, data_type, date_from, date_to):
 
@@ -50,7 +50,7 @@ def get_irradiation (lat, lon, data_type, date_from, date_to):
                 parts = line.strip().split()
                 if len(parts) == 5: 
                     date = parts[1]
-                    value = float(parts[-1]) #last value is the irradiation.
+                    value = float(parts[-1]) #last value is the radiation.
                     if value >= 0:
                         irradiation_values.append((date, value))
 

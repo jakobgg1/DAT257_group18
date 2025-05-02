@@ -7,7 +7,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OptiSolar - Map</title>
-    <link rel="stylesheet" href="./styles.css">    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="./styles.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         #map {
@@ -33,7 +33,7 @@
         <div class="place-search">
             <input type="text" id="place" placeholder="Sök plats, t.ex. Göteborg" oninput="autocompletePlace()" autocomplete="off">
             <ul id="suggestions" class="suggestions-list"></ul>
-            <button onclick="searchPlace()">Sök</button>
+            <button id="searchButton" onclick="searchPlace()">Sök</button>
         </div>
         <div id="map"></div>
     </div>
@@ -42,80 +42,132 @@
         <p>&copy; 2025 OptiSolar. All rights reserved.</p>
     </footer>
 
-    <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Initialize map centered on Sweden
+        // initialize map centered on Sweden
         const map = L.map('map').setView([62.0, 15.0], 5);
         
-        // Add OpenStreetMap tiles
+        // add OpenStreetMap tiles
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
 
-        // Optional: Add a simple marker in Stockholm
         L.marker([59.3293, 18.0686]).addTo(map)
             .bindPopup('Stockholm');
         
+        // search optimization section
+        let searchTimeout;
+        let lastSearchTerm = '';
+        let currentSearchRequest = null;
+
         function autocompletePlace() {
-            const input = document.getElementById("place").value;
+            const input = document.getElementById("place").value.trim();
             const suggestionsList = document.getElementById("suggestions");
 
             suggestionsList.innerHTML = "";
 
-            if (input.length < 3) return;
+            // Clear any pending timeout
+            clearTimeout(searchTimeout);
 
-            const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(input)}&addressdetails=1&limit=5&countrycodes=se`;
+            // stop searching if input hasn't changed or is too short
+            if (input === lastSearchTerm || input.length < 3) return;
+            lastSearchTerm = input;
 
+            searchTimeout = setTimeout(() => {
+                // cancel any ongoing request
+                if (currentSearchRequest) {
+                    currentSearchRequest.abort();
+                }
 
-            fetch(url)
-                .then(res => res.json())
-                .then(data => {
-                    data.forEach(place => {
-                        const li = document.createElement("li");
-                        li.textContent = place.display_name;
-                        li.addEventListener("click", () => {
-                            document.getElementById("place").value = place.display_name;
-                            suggestionsList.innerHTML = "";
-                            searchPlace();
+                const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(input)}&addressdetails=1&limit=5&countrycodes=se`;
+
+                // create new AbortController for the current request
+                const controller = new AbortController();
+                currentSearchRequest = controller;
+
+                fetch(url, { signal: controller.signal })
+                    .then(res => {
+                        if (!res.ok) throw new Error('Network response was not ok');
+                        return res.json();
+                    })
+                    .then(data => {
+                        currentSearchRequest = null;
+                        if (input !== document.getElementById("place").value.trim()) return;
+                        
+                        data.forEach(place => {
+                            const li = document.createElement("li");
+                            li.textContent = place.display_name;
+                            li.addEventListener("click", () => {
+                                document.getElementById("place").value = place.display_name;
+                                suggestionsList.innerHTML = "";
+                                searchPlace();
+                            });
+                            suggestionsList.appendChild(li);
                         });
-                        suggestionsList.appendChild(li);
+                    })
+                    .catch(error => {
+                        if (error.name !== 'AbortError') {
+                            console.error('Fetch error:', error);
+                        }
                     });
-                });
-            }
-
-    function searchPlace() {
-        const place = document.getElementById("place").value;
-
-        if (!place) {
-            alert("Skriv in ett platsnamn.");
-            return;
+            }, 300); // 300ms debounce delay
         }
 
-        // Skapa URL till Nominatim
-        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(place)}`;
+        function searchPlace() {
+            const place = document.getElementById("place").value.trim();
+            const searchButton = document.getElementById("searchButton");
+            const originalButtonText = searchButton.textContent;
 
-        fetch(url)
-            .then(response => response.json())
-            .then(data => {
-                if (data.length > 0) {
-                    const lat = parseFloat(data[0].lat);
-                    const lon = parseFloat(data[0].lon);
+            if (!place) {
+                alert("Skriv in ett platsnamn.");
+                return;
+            }
 
-                    map.setView([lat, lon], 12); // Zooma in
-                    L.marker([lat, lon]).addTo(map)
-                        .bindPopup(`Du sökte: ${place}`)
-                        .openPopup();
-                } else {
-                    alert("Hittade ingen plats med det namnet.");
-                }
-            })
-            .catch(error => {
-                console.error('Fel vid sökning:', error);
-                alert("Något gick fel med plats-sökningen.");
-            });
-    }
+            //cancel any ongoing autocomplete request
+            if (currentSearchRequest) {
+                currentSearchRequest.abort();
+                currentSearchRequest = null;
+            }
 
+            // Clear any pending autocomplete timeout
+            clearTimeout(searchTimeout);
+
+            // Show  the loading state
+            searchButton.textContent = "Söker...";
+            searchButton.disabled = true;
+
+            const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(place)}&countrycodes=se`;
+
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return response.json();
+                })
+                .then(data => {
+                    searchButton.textContent = originalButtonText;
+                    searchButton.disabled = false;
+
+                    if (data.length > 0) {
+                        const lat = parseFloat(data[0].lat);
+                        const lon = parseFloat(data[0].lon);
+
+                        map.setView([lat, lon], 12);
+                        L.marker([lat, lon]).addTo(map)
+                            .bindPopup(`Du sökte: ${place}`)
+                            .openPopup();
+                    } else {
+                        alert("Hittade ingen plats med det namnet.");
+                    }
+                })
+                .catch(error => {
+                    searchButton.textContent = originalButtonText;
+                    searchButton.disabled = false;
+                    if (error.name !== 'AbortError') {
+                        console.error('Fel vid sökning:', error);
+                        alert("Något gick fel med plats-sökningen.");
+                    }
+                });
+        }
 
         let swedenBorder;
 
@@ -124,39 +176,38 @@
             .then(data => {
                 swedenBorder = L.geoJSON(data);
 
-        Papa.parse('dataSweden.csv', {
-            download: true,
-            header: true,
-            complete: function(results) {
-                results.data.forEach(row => {
-                    const lat = parseFloat(row.lat);
-                    const lon = parseFloat(row.lon);
-                    const avg = parseFloat(row.global_avg);
+                Papa.parse('dataSweden.csv', {
+                    download: true,
+                    header: true,
+                    complete: function(results) {
+                        results.data.forEach(row => {
+                            const lat = parseFloat(row.lat);
+                            const lon = parseFloat(row.lon);
+                            const avg = parseFloat(row.global_avg);
 
-                    console.log(`Parsed Row: lat=${lat}, lon=${lon}, avg=${avg}`);
+                            console.log(`Parsed Row: lat=${lat}, lon=${lon}, avg=${avg}`);
 
-
-                    if (avg > 5500){
-                        if(swedenBorder && leafletPip.pointInLayer([lon, lat], swedenBorder).length > 0) {
-                            // Check if the point is within the Sweden border
-                            console.log(`Point is within Sweden border: lat=${lat}, lon=${lon}`);
-                        let color = avg > 6500 ? "red": avg > 6000? "orange" : "green"; 
-                    
-                    L.circleMarker([lat,lon], {
-                        radius: 5,
-                        fillColor: color,
-                        color: color,
-                        weight: 1,
-                        opacity: 1,
-                        fillOpacity: 0.8
-                    }).addTo(map)
-                    .bindPopup(`Radiation: ${avg.toFixed(0)} Wh/m²`);
-                }
-            }
-            })
-            }
-        })
-    });  
+                            if (avg > 5500){
+                                if(swedenBorder && leafletPip.pointInLayer([lon, lat], swedenBorder).length > 0) {
+                                    // make sure the point is within the Swedish border
+                                    console.log(`Point is within Sweden border: lat=${lat}, lon=${lon}`);
+                                    let color = avg > 6500 ? "red": avg > 6000? "orange" : "green"; 
+                                
+                                    L.circleMarker([lat,lon], {
+                                        radius: 5,
+                                        fillColor: color,
+                                        color: color,
+                                        weight: 1,
+                                        opacity: 1,
+                                        fillOpacity: 0.8
+                                    }).addTo(map)
+                                    .bindPopup(`Radiation: ${avg.toFixed(0)} Wh/m²`);
+                                }
+                            }
+                        });
+                    }
+                });
+            });  
     </script>
 </body>
 </html>
