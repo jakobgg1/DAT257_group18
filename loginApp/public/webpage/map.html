@@ -3,7 +3,6 @@
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 <script src="https://unpkg.com/leaflet-pip/leaflet-pip.min.js"></script>
 
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -31,10 +30,10 @@
 
     <div class="container">
         <h1 class="page-title">Sweden Solar Map</h1>
-        <div class="coordinate-search">
-            <input type="text" id="latitude" placeholder="Latitude (t.ex. 57.7)">
-            <input type="text" id="longitude" placeholder="Longitude (t.ex. 11.95)">
-            <button onclick="goToCoordinates()">Go</button>
+        <div class="place-search">
+            <input type="text" id="place" placeholder="Sök plats, t.ex. Göteborg" oninput="autocompletePlace()" autocomplete="off">
+            <ul id="suggestions" class="suggestions-list"></ul>
+            <button onclick="searchPlace()">Sök</button>
         </div>
         <div id="map"></div>
     </div>
@@ -45,8 +44,6 @@
 
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
-
     <script>
         // Initialize map centered on Sweden
         const map = L.map('map').setView([62.0, 15.0], 5);
@@ -60,76 +57,106 @@
         L.marker([59.3293, 18.0686]).addTo(map)
             .bindPopup('Stockholm');
         
-        function goToCoordinates() {
-            const lat = parseFloat(document.getElementById("latitude").value);
-            const lng = parseFloat(document.getElementById("longitude").value);
-        
-                
-            if (!isNaN(lat) && !isNaN(lng)) {
-                map.setView([lat, lng], 12);
-                L.marker([lat, lng]).addTo(map)
-                    .bindPopup(`Du sökte: ${lat}, ${lng}`)
-                    .openPopup();
-            } else {
-                alert("Skriv in giltiga koordinater.");
+        function autocompletePlace() {
+            const input = document.getElementById("place").value;
+            const suggestionsList = document.getElementById("suggestions");
+
+            suggestionsList.innerHTML = "";
+
+            if (input.length < 3) return;
+
+            const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(input)}&addressdetails=1&limit=5&countrycodes=se`;
+
+
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    data.forEach(place => {
+                        const li = document.createElement("li");
+                        li.textContent = place.display_name;
+                        li.addEventListener("click", () => {
+                            document.getElementById("place").value = place.display_name;
+                            suggestionsList.innerHTML = "";
+                            searchPlace();
+                        });
+                        suggestionsList.appendChild(li);
+                    });
+                });
             }
+
+    function searchPlace() {
+        const place = document.getElementById("place").value;
+
+        if (!place) {
+            alert("Skriv in ett platsnamn.");
+            return;
         }
+
+        // Skapa URL till Nominatim
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(place)}`;
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                if (data.length > 0) {
+                    const lat = parseFloat(data[0].lat);
+                    const lon = parseFloat(data[0].lon);
+
+                    map.setView([lat, lon], 12); // Zooma in
+                    L.marker([lat, lon]).addTo(map)
+                        .bindPopup(`Du sökte: ${place}`)
+                        .openPopup();
+                } else {
+                    alert("Hittade ingen plats med det namnet.");
+                }
+            })
+            .catch(error => {
+                console.error('Fel vid sökning:', error);
+                alert("Något gick fel med plats-sökningen.");
+            });
+    }
+
+
         let swedenBorder;
 
-            fetch('swedenGeo.json')
-                .then(response => response.json())
-                .then(data => {
-                    swedenBorder = L.geoJSON(data);
+        fetch('swedenGeo.json')
+            .then(response => response.json())
+            .then(data => {
+                swedenBorder = L.geoJSON(data);
 
-                    let heatData = [];
+        Papa.parse('dataSweden.csv', {
+            download: true,
+            header: true,
+            complete: function(results) {
+                results.data.forEach(row => {
+                    const lat = parseFloat(row.lat);
+                    const lon = parseFloat(row.lon);
+                    const avg = parseFloat(row.global_avg);
 
-                    Papa.parse('dataSweden.csv', {
-                        download: true,
-                        header: true,
-                        complete: function (results) {
-                            results.data.forEach(row => {
-                                const lat = parseFloat(row.lat);
-                                const lon = parseFloat(row.lon);
-                                const avg = parseFloat(row.global_avg);
+                    console.log(`Parsed Row: lat=${lat}, lon=${lon}, avg=${avg}`);
 
-                                console.log(`Parsed Row: lat=${lat}, lon=${lon}, avg=${avg}`);
 
-                                if (avg > 5000) {
-                                    if (swedenBorder && leafletPip.pointInLayer([lon, lat], swedenBorder).length > 0) {
-                                        heatData.push([lat, lon, avg / 1000]);
-                                    } else {
-                                        console.log(`Point is outside Sweden border: lat=${lat}, lon=${lon}`);
-                                    }
-
-                                    // Keeping your original circle markers code commented out:
-                                    /*
-                                    let color = avg > 6500 ? "red" : avg > 6000 ? "orange" : "green"; 
-                                
-                                    L.circleMarker([lat, lon], {
-                                        radius: 5,
-                                        fillColor: color,
-                                        color: color,
-                                        weight: 1,
-                                        opacity: 1,
-                                        fillOpacity: 0.8
-                                    }).addTo(map)
-                                    .bindPopup(`Radiation: ${avg.toFixed(0)} Wh/m²`);
-                                    */
-                                }
-                            });  // <-- Close forEach loop
-
-                            // Create the heatmap layer and add it to the map
-                            L.heatLayer(heatData, {
-                                radius: 25,
-                                blur: 15,
-                                maxZoom: 13  // <-- Reasonable zoom level for heatmap
-                            }).addTo(map);
-                        }  // <-- Close the Papa.parse callback function
-                    });  // <-- Close Papa.parse
-
-                });  // <-- Close the fetch function
-
-   
+                    if (avg > 5500){
+                        if(swedenBorder && leafletPip.pointInLayer([lon, lat], swedenBorder).length > 0) {
+                            // Check if the point is within the Sweden border
+                            console.log(`Point is within Sweden border: lat=${lat}, lon=${lon}`);
+                        let color = avg > 6500 ? "red": avg > 6000? "orange" : "green"; 
+                    
+                    L.circleMarker([lat,lon], {
+                        radius: 5,
+                        fillColor: color,
+                        color: color,
+                        weight: 1,
+                        opacity: 1,
+                        fillOpacity: 0.8
+                    }).addTo(map)
+                    .bindPopup(`Radiation: ${avg.toFixed(0)} Wh/m²`);
+                }
+            }
+            })
+            }
+        })
+    });  
     </script>
 </body>
 </html>
