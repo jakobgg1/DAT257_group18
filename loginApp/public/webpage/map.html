@@ -124,7 +124,7 @@
             .then(data => {
                 swedenBorder = L.geoJSON(data);
 
-        Papa.parse('dataSweden.csv', {
+        Papa.parse('soldata_svergie.csv', {
             download: true,
             header: true,
             complete: function(results) {
@@ -136,11 +136,11 @@
                     console.log(`Parsed Row: lat=${lat}, lon=${lon}, avg=${avg}`);
 
 
-                    if (avg > 5500){
+                    if (avg > 2000){
                         if(swedenBorder && leafletPip.pointInLayer([lon, lat], swedenBorder).length > 0) {
                             // Check if the point is within the Sweden border
                             console.log(`Point is within Sweden border: lat=${lat}, lon=${lon}`);
-                        let color = avg > 6500 ? "red": avg > 6000? "orange" : "green"; 
+                        let color = avg > 3000 ? "red": avg > 2500 ? "orange" : "green"; 
                     
                     L.circleMarker([lat,lon], {
                         radius: 5,
