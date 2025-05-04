@@ -13,7 +13,7 @@ function App() {
   const handleLogin = (e) => {
     e.preventDefault();
 
-    if(username  === "admin" && password === "megadogsab123"){
+    if(username  === "admin" && password === "admin"){
       alert("Login successful");
       window.location.href = "webpage/map.html"
     }else{
