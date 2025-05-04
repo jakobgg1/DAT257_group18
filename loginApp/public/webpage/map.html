@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/heatmap.js/2.0.2/heatmap.min.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="leaflet-heatmap.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 <script src="https://unpkg.com/leaflet-pip/leaflet-pip.min.js"></script>
-<script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script> 
+
 
 <head>
     <meta charset="UTF-8">
@@ -124,12 +126,25 @@
 
         let markerGroup = L.layerGroup().addTo(map);
         
-        let heatLayer;
+      
 
         fetch('swedenGeo.json')
             .then(response => response.json())
             .then(data => {
                 swedenBorder = L.geoJSON(data);
+
+        const maxAvg = 3417.22;
+        const minAvg = 1673.06;
+
+        const heatLayer = new HeatmapOverlay({
+            radius: 0.2,
+            maxOpacity: 0.8,
+            scaleRadius: true,
+            useLocalExtrema: false,
+            latField: 'lat',
+            lngField: 'lon',
+            valueField: 'value'
+        }).addTo(map);
 
         Papa.parse('soldata_svergie.csv', {
             download: true,
@@ -142,22 +157,15 @@
 
                     console.log(`Parsed Row: lat=${lat}, lon=${lon}, avg=${avg}`);
 
-
+               
+               
                     if (avg > 2000){
                         if(swedenBorder && leafletPip.pointInLayer([lon, lat], swedenBorder).length > 0) {
                             // Check if the point is within the Sweden border
                         console.log(`Point is within Sweden border: lat=${lat}, lon=${lon}`);
-
-                        let intensity = 0;
-                            if (avg > 3000) {
-                                intensity = 1.0;
-                            } else if (avg > 2500) {
-                                intensity = 0.6;
-                            } else if (avg > 2000) {
-                                intensity = 0.2;
-                            }
-
-                        heatPoints.push([lat, lon, intensity]);
+                        if(!isNaN(lat) && !isNaN(lon) && !isNaN(avg)) {
+                            heatPoints.push({lat: lat, lon: lon, value: avg});
+                        } 
                       
                         let color = avg > 3000 ? "red": avg > 2500 ? "orange" : "green"; 
                     
@@ -175,19 +183,13 @@
             })
             console.log("Total heatPoints loaded: ", heatPoints.length);
 
-                heatLayer = L.heatLayer(heatPoints, {
-                radius: 10,
-                blur: 5,
-                max: 1,
-                maxZoom: 10,
-                gradient: {
-                    0.2: "blue",
-                    0.4: "lime",
-                    0.6: "yellow",
-                    0.8: "orange",
-                    1: "red"
-                }
-            }).addTo(map);
+                
+
+            heatLayer.setData({
+                max: maxAvg+500,
+                min: 2000,
+                data: heatPoints
+            });
 
             map.removeLayer(markerGroup);
 
