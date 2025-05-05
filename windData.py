@@ -13,7 +13,7 @@ def get_wind_data(station_url):
         response = requests.get(station_url, timeout=10)
         response.raise_for_status()
         
-        # Hantera olika CSV-format
+        # in order to 
         lines = response.text.split('\n')
         data_start = 0
         for i, line in enumerate(lines):
@@ -101,8 +101,8 @@ def get_all_stations():
             except Exception as e:
                 print(f"Fel vid parsing av station: {e}")
                 continue
-                
         return pd.DataFrame(stations)
+
     
     except Exception as e:
         print(f"Fel vid hämtning av stationer: {e}")

@@ -131,10 +131,8 @@
                 currentSearchRequest = null;
             }
 
-            // Clear any pending autocomplete timeout
             clearTimeout(searchTimeout);
 
-            // Show  the loading state
             searchButton.textContent = "Söker...";
             searchButton.disabled = true;
 
@@ -183,10 +181,10 @@
                     const div = L.DomUtil.create('div', 'legend');
                     div.innerHTML = `
                         <h4>Average windspeed (m/s)</h4>
-                        <div><i style="background: #ADD8E6"></i> 0-3</div>
-                        <div><i style="background: #00BFFF"></i> 3-5</div>
-                        <div><i style="background: #004687"></i> 5-7</div>
-                        <div><i style="background: #191970"></i> 7+</div>
+                        <div><i style="background: #0078ff"></i> 0-3</div>
+                        <div><i style="background: #0001dc"></i> 3-5</div>
+                        <div><i style="background: #000280"></i> 5-7</div>
+                        <div><i style="background: #00020c"></i> 7+</div>
                     `;
                     return div;
                 };
@@ -203,11 +201,11 @@
                             const avg = parseFloat(row.avg_speed);
 
                             console.log(`Parsed Row: lat=${lat}, lon=${lon}, avg=${avg}`);
-
+                            // fill color based on avg_speed
                             if (avg > 0.5){
                                 if(swedenBorder && leafletPip.pointInLayer([lon, lat], swedenBorder).length > 0) {
                                     console.log(`Point is within Sweden border: lat=${lat}, lon=${lon}`);
-                                    let color = avg > 7 ? "#191970": avg > 5? "#004687": avg > 3? "#00BFFF": "#ADD8E6"; 
+                                    let color = avg > 7 ? "#00020c": avg > 5? "#000280": avg > 3? "#0001dc": "#0078ff"; 
                                 
                                     L.circleMarker([lat,lon], {
                                         radius: 5,
