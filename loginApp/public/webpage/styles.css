@@ -203,3 +203,33 @@ body {
 .suggestions-list li:hover {
     background-color: #f0f0f0;
 }
+
+
+
+.legend {
+    padding: 10px;
+    background: white;
+    border-radius: 5px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    line-height: 1.5;
+    font-family: Arial, sans-serif;
+}
+
+.legend h4 {
+    margin: 0 0 10px;
+    font-size: 16px;
+}
+
+.legend i {
+    width: 18px;
+    height: 18px;
+    float: left;
+    margin-right: 8px;
+    opacity: 0.8;
+}
+
+.legend div {
+    display: flex;
+    align-items: center;
+    margin: 3px 0;
+}
