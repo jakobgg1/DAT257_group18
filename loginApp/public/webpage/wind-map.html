@@ -131,10 +131,8 @@
                 currentSearchRequest = null;
             }
 
-            // Clear any pending autocomplete timeout
             clearTimeout(searchTimeout);
 
-            // Show  the loading state
             searchButton.textContent = "Söker...";
             searchButton.disabled = true;
 
@@ -183,10 +181,10 @@
                     const div = L.DomUtil.create('div', 'legend');
                     div.innerHTML = `
                         <h4>Average windspeed (m/s)</h4>
-                        <div><i style="background: #ADD8E6"></i> 0-3</div>
-                        <div><i style="background: #00BFFF"></i> 3-5</div>
-                        <div><i style="background: #004687"></i> 5-7</div>
-                        <div><i style="background: #191970"></i> 7+</div>
+                        <div><i style="background: #0078ff"></i> 0-3</div>
+                        <div><i style="background: #0001dc"></i> 3-5</div>
+                        <div><i style="background: #000280"></i> 5-7</div>
+                        <div><i style="background: #00020c"></i> 7+</div>
                     `;
                     return div;
                 };
