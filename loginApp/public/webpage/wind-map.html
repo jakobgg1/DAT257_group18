@@ -192,32 +192,57 @@
                 };
 
                 legend.addTo(map);
+                function windArrowSVG(dir, color, avg) {
+                    const safeAvg = !isNaN(avg) && avg > 0 ? avg : 1; // säkerhetsnät
+                    const baseSize = 10;
+                    const scaleFactor = Math.min(safeAvg / 1.3, 3);  // max dubbla storleken
+                    const size = baseSize * scaleFactor;
+                    const center = size / 2;
 
-                Papa.parse('svenska_vindstationer.csv', {
+                    const arrowWidth = size * 0.4;
+                    const shaftWidth = size * 0.2;
+                    const shaftHeight = size * 0.6;
+
+                    const svg = `
+                        <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
+                            <g transform="rotate(${dir}, ${center}, ${center})">
+                                <polygon points="${center - arrowWidth/2},10 ${center + arrowWidth/2},10 ${center},0" fill="${color}" />
+                                <rect x="${center - shaftWidth/2}" y="10" width="${shaftWidth}" height="${shaftHeight}" fill="${color}" />
+                            </g>
+                        </svg>
+                    `;
+
+                    return L.divIcon({
+                        html: svg,
+                        className: '',
+                        iconSize: [size, size],
+                        iconAnchor: [center, center]
+                    });
+                }
+                Papa.parse('wind-data.csv', {
                     download: true,
                     header: true,
                     complete: function(results) {
                         results.data.forEach(row => {
-                            const lat = parseFloat(row.lat);
-                            const lon = parseFloat(row.lon);
-                            const avg = parseFloat(row.avg_speed);
+                            const lat = parseFloat(row.latitude);
+                            const lon = parseFloat(row.longitude);
+                            const avg = parseFloat(row.avg_wind_speed);
+                            const dir = parseFloat(row.avg_wind_direction);
+                            const name = row.station_name;
 
-                            console.log(`Parsed Row: lat=${lat}, lon=${lon}, avg=${avg}`);
+                            if (!isNaN(lat) && !isNaN(lon) && !isNaN(avg) && !isNaN(dir)) {
+                                if (swedenBorder && leafletPip.pointInLayer([lon, lat], swedenBorder).length > 0) {
 
-                            if (avg > 0.5){
-                                if(swedenBorder && leafletPip.pointInLayer([lon, lat], swedenBorder).length > 0) {
-                                    console.log(`Point is within Sweden border: lat=${lat}, lon=${lon}`);
-                                    let color = avg > 7 ? "#191970": avg > 5? "#004687": avg > 3? "#00BFFF": "#ADD8E6"; 
-                                
-                                    L.circleMarker([lat,lon], {
-                                        radius: 5,
-                                        fillColor: color,
-                                        color: color,
-                                        weight: 1,
-                                        opacity: 1,
-                                        fillOpacity: 0.8
-                                    }).addTo(map)
-                                    .bindPopup(`Average windspeed in ${row.name}: ${avg.toFixed(4)} m/s`);
+                                    // Välj färg utifrån vindhastighet
+                                    let color = avg > 7 ? "#191970"
+                                            : avg > 5 ? "#004687"
+                                            : avg > 3 ? "#00BFFF"
+                                            : "#5FA5E0"; // Ändrad från #ADD8E6 till mer synlig
+
+                                    // Skapa pil-ikon med riktning, färg och skalning efter vindhastighet
+                                    L.marker([lat, lon], { icon: windArrowSVG(dir, color, avg) })
+                                        .addTo(map)
+                                        .bindPopup(`Vind i ${name}:<br><strong>${avg.toFixed(2)} m/s</strong><br>Riktning: ${dir.toFixed(0)}°`);
                                 }
                             }
                         });

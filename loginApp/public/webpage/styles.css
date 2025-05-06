@@ -233,3 +233,10 @@ body {
     align-items: center;
     margin: 3px 0;
 }
+
+.wind-arrow {
+    font-size: 18px;
+    color: #191970;
+    text-align: center;
+    line-height: 20px;
+}
