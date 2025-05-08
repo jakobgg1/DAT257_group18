@@ -148,7 +148,7 @@
             valueField: 'value'
         }).addTo(map);
 
-        Papa.parse('soldata_svergie.csv', {
+        Papa.parse('soldata_svergieV2.csv', {
             download: true,
             header: true,
             complete: function(results) {
@@ -189,11 +189,11 @@
 
             heatLayer.setData({
                 max: maxAvg+500,
-                min: 2000,
+                min: 2400,
                 data: heatPoints
             });
 
-            map.removeLayer(markerGroup);
+            map.removeLayer(heatLayer);
 
             map.on('zoomend', () => {
                 const zoomLevel = map.getZoom();
